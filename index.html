@@ -6,19 +6,18 @@
         <title>RSS Agregator</title>
     </head>
     <body>
-        <div>
+        <div class="container">
             <h1>RSS агрегатор</h1>
-            <p>Начните читать RSS сегодня! Это легко, это красиво.</p>
             <form>
                 <div>
-                    <input id="url-input" autofocus required name="url" class="form-control" placeholder="ссылка RSS" autocomplete="off">
+                    <input id="url-input" autofocus required name="url" aria-label="url" class="form-control" placeholder="Ссылка RSS" autocomplete="off">
                     <label for="url-input">Ссылка RSS</label>
                 </div>
                 <div>
                     <button id="rss-submit" type="submit">Добавить</button>
                 </div>
             </form>
-            <p>Пример: https://ru.hexlet.io/lessons.rss</p>
+            <p class="example">Пример: https://ru.hexlet.io/lessons.rss</p>
             <p class="feedback"></p>
         </div>
         

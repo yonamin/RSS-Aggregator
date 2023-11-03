@@ -1,10 +1,16 @@
+root: true
+
+plugins:
+  - babel
+
 env:
-  browser: true
-  es2021: true
   node: true
-extends: eslint:recommended
-overrides: []
-parserOptions:
-  ecmaVersion: latest
-  sourceType: module
-rules: {}
+  browser: true
+
+extends:
+  - "airbnb-base"
+
+rules:
+  no-console: 0
+  import/extensions: 0
+  no-param-reassign: 0

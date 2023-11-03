@@ -1,3 +1,44 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+body {
+    background-color: rgb(66, 40, 56);
+}
+.container {
+    padding-left: 100px;
+    display: flexbox;
+    font-family:'Courier New', Courier, monospace
+}
+
+#url-input {
+    border: 2px solid ;
+    border-color: rgb(134, 26, 78);
+    border-radius: 0.3rem;
+    padding: 10px 90px;
+}
+
+#url-input::placeholder {
+    text-align: start;
+    color: #212529;
+    opacity: 0.4;
+  }
+
+#rss-submit {
+    margin-top: 15px;
+    padding: 5px 15px;
+    border-radius: 0.3rem;
+}
+
+.example {
+    opacity: 50%;
+}
 .form-control.is-invalid {
     border-color: red;
+}
+.feedback.text-danger {
+    color: indianred;
+}
+.feedback.text-success {
+    color:darkseagreen
 }
