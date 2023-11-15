@@ -9,6 +9,10 @@ export default {
       alreadyExists: 'RSS уже существует',
       invalidUrl: 'Ресурс не содержит валидный RSS',
     },
-    networkError: 'Ошибка сети',
+    networkError: 'Что-то пошло не так. Пожалуйста, попробуйте снова',
+    content: {
+      feeds: 'Фиды',
+      posts: 'Посты',
+    },
   },
 };

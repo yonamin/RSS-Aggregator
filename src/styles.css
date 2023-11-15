@@ -6,16 +6,19 @@ body {
     background-color: rgb(66, 40, 56);
 }
 .container {
-    padding-left: 100px;
+    padding: 25px 50px 50px;
     display: flexbox;
     font-family:'Courier New', Courier, monospace
 }
 
 #url-input {
+    display: block;
+    margin: 0;
+    width: 25rem;
     border: 2px solid ;
     border-color: rgb(134, 26, 78);
     border-radius: 0.3rem;
-    padding: 10px 90px;
+    padding: 0.375rem 0.75rem 
 }
 
 #url-input::placeholder {
@@ -34,7 +37,7 @@ body {
     opacity: 50%;
 }
 .form-control.is-invalid {
-    border-color: red;
+    border-color: rgb(0, 0, 0);
 }
 .feedback.text-danger {
     color: indianred;
