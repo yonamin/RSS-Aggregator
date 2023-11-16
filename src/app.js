@@ -11,23 +11,26 @@ const parse = (data) => {
   return parser.parseFromString(data, 'application/xml');
 };
 
-const normalizeContent = (doc) => {
+const normalizeFeed = (doc) => {
   const feed = {
     title: doc.querySelector('title').textContent,
     description: doc.querySelector('description').textContent,
     id: uniqueId(),
   };
+  return feed;
+};
+const normalizePosts = (doc, feedId) => {
   const posts = [];
   doc.querySelectorAll('item').forEach((node) => {
     const item = {
       title: node.querySelector('title').textContent,
       link: node.querySelector('link').textContent,
-      feedId: feed.id,
+      feedId,
       id: uniqueId(),
     };
     posts.push(item);
   });
-  return { feed, posts };
+  return posts;
 };
 
 const getPosts = (inputedUrl) => {
@@ -36,9 +39,26 @@ const getPosts = (inputedUrl) => {
   return axios.get(disabledCacheUrl)
     .then((response) => {
       const doc = parse(response.data.contents);
-      const content = normalizeContent(doc);
-      return content;
+      const feed = normalizeFeed(doc);
+      const posts = normalizePosts(doc, feed.id);
+      return { feed, posts };
     });
+};
+
+const checkNewPosts = (state) => {
+  state.form.rssUrls.forEach((item) => {
+    getPosts(item.url)
+      .then((newContent) => {
+        newContent.posts.forEach((newPost) => {
+          const alreadyExists = state.content.posts
+            .find((oldPost) => oldPost.link === newPost.link);
+          if (!alreadyExists) {
+            newPost.feedId = item.feedId;
+            state.content.posts.push(newPost);
+          }
+        });
+      });
+  });
 };
 
 const app = (i18nextInstance) => {
@@ -71,7 +91,8 @@ const app = (i18nextInstance) => {
       url: i18nextInstance.t('feedbackMessage.invalidUrl'),
     },
   });
-  const isUnique = (url) => !watchedState.form.rssUrls.includes(url);
+  const urls = watchedState.form.rssUrls.map((item) => item.url);
+  const isUnique = (url) => !urls.includes(url);
   const schema = yup.object({
     url: yup.string().url()
       .test('isUnique', i18nextInstance.t('feedbackMessage.alreadyExists'), (value) => isUnique(value))
@@ -81,6 +102,11 @@ const app = (i18nextInstance) => {
   const validate = (field) => schema.validate(field, { abortEarly: false })
     .then(() => {})
     .catch((e) => _.keyBy(e.inner, 'path'));
+
+  setTimeout(function run() {
+    checkNewPosts(watchedState);
+    setTimeout(run, 5000);
+  }, 5000);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -96,9 +122,9 @@ const app = (i18nextInstance) => {
           throw error;
         }
       })
-      .then(() => getPosts(value, watchedState))
+      .then(() => getPosts(value))
       .then((content) => {
-        watchedState.form.rssUrls.push(value);
+        watchedState.form.rssUrls.push({ url: value, feedId: content.feed.id });
         watchedState.content.lastAddedFeed = content.feed;
         watchedState.content.feeds.push(content.feed);
         watchedState.content.posts.push(...content.posts);

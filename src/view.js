@@ -47,7 +47,8 @@ const feedHandler = (state, elements, i18n) => {
   document.querySelector('.list-feeds').prepend(feedEl);
 };
 
-const postHandler = (state, elements, i18n) => {
+const postHandler = (posts, elements, i18n) => {
+  // posts are last added
   if (!elements.posts.querySelector('h2')) {
     const postsHeader = document.createElement('h2');
     postsHeader.textContent = i18n.t('content.posts');
@@ -55,19 +56,15 @@ const postHandler = (state, elements, i18n) => {
     postsList.classList.add('list-posts');
     elements.posts.append(postsHeader, postsList);
   }
-
-  const { lastAddedFeed } = state.content;
-  state.content.posts
-    .filter((post) => post.feedId === lastAddedFeed.id)
-    .forEach((post) => {
-      const postEl = document.createElement('li');
-      postEl.classList.add('list-posts-item');
-      const a = document.createElement('a');
-      a.setAttribute('href', post.link);
-      a.textContent = post.title;
-      postEl.append(a);
-      document.querySelector('.list-posts').prepend(postEl);
-    });
+  posts.forEach((post) => {
+    const postEl = document.createElement('li');
+    postEl.classList.add('list-posts-item');
+    const a = document.createElement('a');
+    a.setAttribute('href', post.link);
+    a.textContent = post.title;
+    postEl.append(a);
+    document.querySelector('.list-posts').prepend(postEl);
+  });
 };
 
 const handleProcessStatus = (elements, process) => {
@@ -79,7 +76,7 @@ const handleProcessStatus = (elements, process) => {
   }
 };
 
-const initView = (state, elements, i18n) => (path, value) => {
+const initView = (state, elements, i18n) => (path, value, _, applyData) => {
   switch (path) {
     case 'form.validationErrors':
       errorHandler(value, elements);
@@ -92,7 +89,7 @@ const initView = (state, elements, i18n) => (path, value) => {
       feedHandler(state, elements, i18n);
       break;
     case 'content.posts':
-      postHandler(state, elements, i18n);
+      postHandler(applyData.args, elements, i18n);
       break;
     case 'form.status':
       handleProcessStatus(elements, value, i18n);
