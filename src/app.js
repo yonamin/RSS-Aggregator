@@ -12,53 +12,37 @@ const parse = (data) => {
 };
 
 const normalizeFeed = (doc) => {
-  const feed = {
-    title: doc.querySelector('title').textContent,
-    description: doc.querySelector('description').textContent,
-    id: uniqueId(),
-  };
-  return feed;
+  const title = doc.querySelector('title');
+  const description = doc.querySelector('description');
+  if (title && description) {
+    const feed = {
+      title: title.textContent,
+      description: description.textContent,
+      id: uniqueId(),
+    };
+    return feed;
+  }
+  throw new Error('Invalid format');
 };
 const normalizePosts = (doc, feedId) => {
-  const posts = [];
+  const postList = [];
   doc.querySelectorAll('item').forEach((node) => {
-    const item = {
+    const post = {
       title: node.querySelector('title').textContent,
       link: node.querySelector('link').textContent,
+      description: node.querySelector('description').textContent,
       feedId,
       id: uniqueId(),
     };
-    posts.push(item);
-  });
-  return posts;
-};
 
-const getPosts = (inputedUrl) => {
-  const encoded = encodeURIComponent(inputedUrl);
-  const disabledCacheUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`;
-  return axios.get(disabledCacheUrl)
-    .then((response) => {
-      const doc = parse(response.data.contents);
-      const feed = normalizeFeed(doc);
-      const posts = normalizePosts(doc, feed.id);
-      return { feed, posts };
-    });
-};
-
-const checkNewPosts = (state) => {
-  state.form.rssUrls.forEach((item) => {
-    getPosts(item.url)
-      .then((newContent) => {
-        newContent.posts.forEach((newPost) => {
-          const alreadyExists = state.content.posts
-            .find((oldPost) => oldPost.link === newPost.link);
-          if (!alreadyExists) {
-            newPost.feedId = item.feedId;
-            state.content.posts.push(newPost);
-          }
-        });
-      });
+    const postUi = {
+      postId: post.id,
+      checked: false,
+    };
+    postList.push({ post, postUi });
   });
+
+  return postList;
 };
 
 const app = (i18nextInstance) => {
@@ -67,11 +51,17 @@ const app = (i18nextInstance) => {
       status: 'filling',
       rssUrls: [],
       validationErrors: {},
-      processError: null,
+      processErrors: {
+        networkError: null,
+        invalidRSS: {},
+      },
     },
     content: {
       feeds: [],
       lastAddedFeed: {},
+      posts: [],
+    },
+    uiState: {
       posts: [],
     },
   };
@@ -82,17 +72,64 @@ const app = (i18nextInstance) => {
     feedbackMessage: document.querySelector('.feedback'),
     feeds: document.querySelector('.feeds'),
     posts: document.querySelector('.posts'),
+    modalElements: {
+      container: document.querySelector('.modal'),
+      title: document.querySelector('.modal-title'),
+      body: document.querySelector('.modal-body'),
+      btnsClose: document.querySelectorAll('.close'),
+      btnFullArticle: document.querySelector('.full-article'),
+    },
   };
   const watchedState = onChange(state, view(state, elements, i18nextInstance));
 
+  const getPosts = (inputedUrl) => {
+    const encoded = encodeURIComponent(inputedUrl);
+    const disabledCacheUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`;
+    return axios.get(disabledCacheUrl)
+      .catch((err) => {
+        watchedState.form.status = 'error';
+        watchedState.form.processErrors.invalidRSS = err;
+        throw err;
+      })
+      .then((response) => {
+        const doc = parse(response.data.contents);
+        const feed = normalizeFeed(doc);
+        const posts = normalizePosts(doc, feed.id);
+        return { feed, posts };
+      })
+      .catch((err) => {
+        watchedState.form.status = 'error';
+        watchedState.form.processErrors.invalidRSS = { err };
+      });
+  };
+
+  const checkNewPosts = () => {
+    watchedState.form.rssUrls.forEach(({ url, feedId }) => {
+      getPosts(url)
+        .then((newContent) => {
+          newContent.posts.forEach(({ post, postUi }) => {
+            const alreadyExists = watchedState.content.posts
+              .find((oldPost) => oldPost.link === post.link);
+            if (!alreadyExists) {
+              post.feedId = feedId;
+              watchedState.content.posts.push(post);
+              watchedState.uiState.posts.push(postUi);
+            }
+          });
+        });
+    });
+  };
   yup.setLocale({
     string: {
       isUnique: i18nextInstance.t('feedbackMessage.alreadyExists'),
       url: i18nextInstance.t('feedbackMessage.invalidUrl'),
     },
   });
-  const urls = watchedState.form.rssUrls.map((item) => item.url);
-  const isUnique = (url) => !urls.includes(url);
+
+  const isUnique = (url) => {
+    const urls = watchedState.form.rssUrls.map((item) => item.url);
+    return !urls.includes(url);
+  };
   const schema = yup.object({
     url: yup.string().url()
       .test('isUnique', i18nextInstance.t('feedbackMessage.alreadyExists'), (value) => isUnique(value))
@@ -104,21 +141,20 @@ const app = (i18nextInstance) => {
     .catch((e) => _.keyBy(e.inner, 'path'));
 
   setTimeout(function run() {
-    checkNewPosts(watchedState);
+    checkNewPosts();
     setTimeout(run, 5000);
   }, 5000);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.form.status = 'sending';
-    watchedState.form.processError = null;
+    watchedState.form.processErrors.networkError = null;
 
-    const value = elements.input.value.trim();
+    const { value } = elements.input;
     validate({ url: value })
       .then((error) => {
         watchedState.form.validationErrors = { error };
         if (!_.isEmpty(watchedState.form.validationErrors.error)) {
-          watchedState.form.status = 'error';
           throw error;
         }
       })
@@ -127,14 +163,14 @@ const app = (i18nextInstance) => {
         watchedState.form.rssUrls.push({ url: value, feedId: content.feed.id });
         watchedState.content.lastAddedFeed = content.feed;
         watchedState.content.feeds.push(content.feed);
-        watchedState.content.posts.push(...content.posts);
+        content.posts.forEach(({ post, postUi }) => {
+          watchedState.content.posts.push(post);
+          watchedState.uiState.posts.push(postUi);
+        });
         watchedState.form.status = 'success';
       })
-      .catch((err) => {
-        if (!err.url) {
-          watchedState.form.status = 'error';
-          watchedState.form.processError = err;
-        }
+      .catch(() => {
+        watchedState.form.status = 'error';
       });
   });
 };

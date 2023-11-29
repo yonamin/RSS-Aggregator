@@ -1,15 +1,27 @@
+@import "~bootstrap/scss/bootstrap";
+
 *, *::before, *::after {
     box-sizing: border-box;
   }
 
 body {
-    background-color: rgb(66, 40, 56);
+    background-color: rgb(43, 33, 39);
 }
 .container {
     padding: 25px 50px 50px;
-    display: flexbox;
+    display: flex;
+    flex-direction: column;
     font-family:'Courier New', Courier, monospace
 }
+
+ul {
+    list-style-type: none;
+}
+
+a:link {color:rgb(212, 112, 166)}
+a:visited {color:rgb(185, 157, 166)}
+a:hover {color:rgb(216, 148, 185)}
+
 
 #url-input {
     display: block;
@@ -31,8 +43,16 @@ body {
     margin-top: 15px;
     padding: 5px 15px;
     border-radius: 0.3rem;
+    background-color: rgb(83, 30, 54);
+    border-color: rgb(116, 35, 94);
 }
 
+ul.list-posts {
+    flex-direction: column;
+}
+li.list-posts-item {
+    flex-direction: row;
+}
 .example {
     opacity: 50%;
 }
