@@ -88,7 +88,7 @@ const app = (i18nextInstance) => {
     return axios.get(disabledCacheUrl)
       .catch((err) => {
         watchedState.form.status = 'error';
-        watchedState.form.processErrors.invalidRSS = err;
+        watchedState.form.processErrors.networkError = err;
         throw err;
       })
       .then((response) => {
