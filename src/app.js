@@ -86,11 +86,6 @@ const app = (i18nextInstance) => {
     const encoded = encodeURIComponent(inputedUrl);
     const disabledCacheUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`;
     return axios.get(disabledCacheUrl)
-      .catch((err) => {
-        watchedState.form.status = 'error';
-        watchedState.form.processErrors.networkError = err;
-        throw err;
-      })
       .then((response) => {
         const doc = parse(response.data.contents);
         const feed = normalizeFeed(doc);
@@ -99,7 +94,11 @@ const app = (i18nextInstance) => {
       })
       .catch((err) => {
         watchedState.form.status = 'error';
-        watchedState.form.processErrors.invalidRSS = { err };
+        if (err.message === 'Network Error') {
+          watchedState.form.processErrors.networkError = { err };
+        } else {
+          watchedState.form.processErrors.invalidRSS = { err };
+        }
       });
   };
 

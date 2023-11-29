@@ -147,7 +147,7 @@ const initView = (state, elements, i18n) => (path, value, _, applyData) => {
       successHandler(elements, i18n);
       break;
     default:
-      throw new Error(`Unknown state path: ${path}`);
+      break;
   }
 };
 
