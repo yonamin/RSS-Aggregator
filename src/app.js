@@ -85,7 +85,8 @@ const app = (i18nextInstance) => {
   const getPosts = (inputedUrl) => {
     const encoded = encodeURIComponent(inputedUrl);
     const disabledCacheUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`;
-    return axios.get(disabledCacheUrl)
+    return axios
+      .get(disabledCacheUrl)
       .then((response) => {
         const doc = parse(response.data.contents);
         const feed = normalizeFeed(doc);
@@ -104,18 +105,18 @@ const app = (i18nextInstance) => {
 
   const checkNewPosts = () => {
     watchedState.form.rssUrls.forEach(({ url, feedId }) => {
-      getPosts(url)
-        .then((newContent) => {
-          newContent.posts.forEach(({ post, postUi }) => {
-            const alreadyExists = watchedState.content.posts
-              .find((oldPost) => oldPost.link === post.link);
-            if (!alreadyExists) {
-              post.feedId = feedId;
-              watchedState.content.posts.push(post);
-              watchedState.uiState.posts.push(postUi);
-            }
-          });
+      getPosts(url).then((newContent) => {
+        newContent.posts.forEach(({ post, postUi }) => {
+          const alreadyExists = watchedState.content.posts.find(
+            (oldPost) => oldPost.link === post.link,
+          );
+          if (!alreadyExists) {
+            post.feedId = feedId;
+            watchedState.content.posts.push(post);
+            watchedState.uiState.posts.push(postUi);
+          }
         });
+      });
     });
   };
   yup.setLocale({
@@ -130,12 +131,19 @@ const app = (i18nextInstance) => {
     return !urls.includes(url);
   };
   const schema = yup.object({
-    url: yup.string().url()
-      .test('isUnique', i18nextInstance.t('feedbackMessage.alreadyExists'), (value) => isUnique(value))
+    url: yup
+      .string()
+      .url()
+      .test(
+        'isUnique',
+        i18nextInstance.t('feedbackMessage.alreadyExists'),
+        (value) => isUnique(value),
+      )
       .required(),
   });
 
-  const validate = (field) => schema.validate(field, { abortEarly: false })
+  const validate = (field) => schema
+    .validate(field, { abortEarly: false })
     .then(() => {})
     .catch((e) => _.keyBy(e.inner, 'path'));
 
@@ -176,9 +184,11 @@ const app = (i18nextInstance) => {
 
 export default () => {
   const i18nextInstance = i18next.createInstance();
-  i18nextInstance.init({
-    lng: 'ru',
-    debug: true,
-    resources,
-  }).then(() => app(i18nextInstance));
+  i18nextInstance
+    .init({
+      lng: 'ru',
+      debug: true,
+      resources,
+    })
+    .then(() => app(i18nextInstance));
 };

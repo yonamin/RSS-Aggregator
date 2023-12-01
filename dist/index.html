@@ -1,26 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta charset="utf-8" />
-        <title>RSS Agregator</title>
-    <script defer src="main.js"></script></head>
-    <body>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>RSS Agregator</title>
+    <script defer src="main.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1>RSS агрегатор</h1>
+      <form>
         <div>
-            <h1>RSS агрегатор</h1>
-            <p>Начните читать RSS сегодня! Это легко, это красиво.</p>
-            <form>
-                <div>
-                    <input id="url-input" autofocus required name="url" class="form-control" placeholder="ссылка RSS" autocomplete="off">
-                    <label for="url-input">Ссылка RSS</label>
-                </div>
-                <div>
-                    <button type="submit">Добавить</button>
-                </div>
-            </form>
-            <p>Пример: https://ru.hexlet.io/lessons.rss</p>
+          <input
+            id="url-input"
+            autofocus
+            required
+            name="url"
+            class="form-control"
+            placeholder="ссылка RSS"
+            autocomplete="off"
+          />
+          <label for="url-input">Ссылка RSS</label>
         </div>
-        
-    </body>
-    
+        <div>
+          <button type="submit">Добавить</button>
+        </div>
+      </form>
+      <p>Пример: https://ru.hexlet.io/lessons.rss</p>
+    </div>
+  </body>
 </html>

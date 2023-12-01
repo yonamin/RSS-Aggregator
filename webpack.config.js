@@ -32,7 +32,6 @@ const config = {
             presets: ['@babel/preset-env'],
           },
         },
-
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,

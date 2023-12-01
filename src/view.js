@@ -1,9 +1,7 @@
 import { Modal } from 'bootstrap';
 
 const errorHandler = (alert, elements) => {
-  const errorMessage = alert.error !== undefined
-    ? alert.error.url.message
-    : alert.error;
+  const errorMessage = alert.error !== undefined ? alert.error.url.message : alert.error;
   if (errorMessage) {
     elements.input.classList.add('is-invalid');
     elements.feedbackMessage.textContent = errorMessage;
@@ -14,7 +12,9 @@ const errorHandler = (alert, elements) => {
 
 const networkErrorHandler = (value, elements, i18n) => {
   if (value) {
-    elements.feedbackMessage.textContent = i18n.t('feedbackMessage.networkError');
+    elements.feedbackMessage.textContent = i18n.t(
+      'feedbackMessage.networkError',
+    );
     elements.feedbackMessage.classList.remove('text-success');
     elements.feedbackMessage.classList.add('text-danger');
   }
@@ -66,20 +66,28 @@ const postHandler = (posts, state, elements, i18n) => {
   posts.forEach((post) => {
     const checkedPostsHandler = (postUi) => {
       if (postUi.checked) {
-        const clickedEl = document.querySelector(`a[data-id="${postUi.postId}"]`);
+        const clickedEl = document.querySelector(
+          `a[data-id="${postUi.postId}"]`,
+        );
         clickedEl.classList.remove('fw-bold');
         clickedEl.classList.add('fw-normal', 'link-secondary');
       }
     };
     const clickHandler = () => {
-      const clickedPost = state.uiState.posts
-        .find((currentPost) => currentPost.postId === post.id);
+      const clickedPost = state.uiState.posts.find(
+        (currentPost) => currentPost.postId === post.id,
+      );
       clickedPost.checked = true;
       checkedPostsHandler(clickedPost);
     };
 
     const postEl = document.createElement('li');
-    postEl.classList.add('list-posts-item', 'd-flex', 'justify-content-between', 'align-items-start');
+    postEl.classList.add(
+      'list-posts-item',
+      'd-flex',
+      'justify-content-between',
+      'align-items-start',
+    );
     const a = document.createElement('a');
     a.setAttribute('href', post.link);
     a.textContent = post.title;
@@ -93,7 +101,6 @@ const postHandler = (posts, state, elements, i18n) => {
     btn.textContent = i18n.t('content.show');
     btn.dataset.id = post.id;
     btn.classList.add('btn', 'btn-sm', 'btn-outline-light');
-    //
     btn.addEventListener('click', () => {
       clickHandler();
       modalElements.title.textContent = post.title;
@@ -106,7 +113,6 @@ const postHandler = (posts, state, elements, i18n) => {
       });
       modal.show();
     });
-    // rewrite on state
 
     postEl.append(a, btn);
     a.addEventListener('click', clickHandler);
