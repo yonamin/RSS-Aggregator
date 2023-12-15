@@ -1,7 +1,7 @@
 import { Modal } from 'bootstrap';
 
 const errorHandler = (alert, elements) => {
-  const errorMessage = alert.error !== undefined ? alert.error.url.message : alert.error;
+  const errorMessage = alert.error?.url.message;
   if (errorMessage) {
     elements.input.classList.add('is-invalid');
     elements.feedbackMessage.textContent = errorMessage;
@@ -35,18 +35,27 @@ const successHandler = (elements, i18n) => {
   elements.input.focus();
 };
 
-const feedHandler = (state, elements, i18n) => {
+const feedHandler = (lastAddedFeed, elements, i18n) => {
   if (!elements.feeds.querySelector('h2')) {
+    const feedsCard = document.createElement('div');
+    feedsCard.classList.add('card', 'border-0');
+
+    const cardBody = document.createElement('div');
+    cardBody.classList.add('card-body');
     const feedsHeader = document.createElement('h2');
     feedsHeader.textContent = i18n.t('content.feeds');
+    feedsHeader.classList.add('card-title', 'h3');
+    cardBody.append(feedsHeader);
+
     const feedsList = document.createElement('ul');
-    feedsList.classList.add('list-feeds');
-    elements.feeds.append(feedsHeader, feedsList);
+    feedsList.classList.add('list-feeds', 'list-group', 'border-0', 'rounded-0');
+
+    feedsCard.append(cardBody, feedsList);
+    elements.feeds.append(feedsCard);
   }
-  const { lastAddedFeed } = state.content;
 
   const feedEl = document.createElement('li');
-  feedEl.classList.add('list-feeds-item');
+  feedEl.classList.add('list-feeds-item', 'list-group-item', 'border-0', 'border-end-0');
   const h3 = document.createElement('h3');
   h3.textContent = lastAddedFeed.title;
   const p = document.createElement('p');
@@ -55,38 +64,41 @@ const feedHandler = (state, elements, i18n) => {
   document.querySelector('.list-feeds').prepend(feedEl);
 };
 
-const postHandler = (posts, state, elements, i18n) => {
+const visitedPostsHandler = (postId) => {
+  const clickedEl = document.querySelector(
+    `a[data-id="${postId}"]`,
+  );
+  clickedEl.classList.remove('fw-bold');
+  clickedEl.classList.add('fw-normal', 'link-secondary');
+};
+const postHandler = (posts, elements, i18n) => {
   if (!elements.posts.querySelector('h2')) {
-    const postsHeader = document.createElement('h2');
-    postsHeader.textContent = i18n.t('content.posts');
+    const postsCard = document.createElement('div');
+    postsCard.classList.add('card', 'border-0');
+
+    const headerCard = document.createElement('div');
+    headerCard.classList.add('card-body');
+    const cardTitle = document.createElement('h2');
+    cardTitle.textContent = i18n.t('content.posts');
+    cardTitle.classList.add('card-title', 'h3');
+    headerCard.append(cardTitle);
+
     const postsList = document.createElement('ul');
-    postsList.classList.add('list-posts');
-    elements.posts.append(postsHeader, postsList);
+    postsList.classList.add('list-posts', 'list-group', 'border-0', 'rounded-0');
+
+    postsCard.append(headerCard, postsList);
+    elements.posts.append(postsCard);
   }
   posts.forEach((post) => {
-    const checkedPostsHandler = (postUi) => {
-      if (postUi.checked) {
-        const clickedEl = document.querySelector(
-          `a[data-id="${postUi.postId}"]`,
-        );
-        clickedEl.classList.remove('fw-bold');
-        clickedEl.classList.add('fw-normal', 'link-secondary');
-      }
-    };
-    const clickHandler = () => {
-      const clickedPost = state.uiState.posts.find(
-        (currentPost) => currentPost.postId === post.id,
-      );
-      clickedPost.checked = true;
-      checkedPostsHandler(clickedPost);
-    };
-
     const postEl = document.createElement('li');
     postEl.classList.add(
       'list-posts-item',
+      'list-group-item',
       'd-flex',
       'justify-content-between',
       'align-items-start',
+      'border-0',
+      'border-end-0',
     );
     const a = document.createElement('a');
     a.setAttribute('href', post.link);
@@ -94,30 +106,29 @@ const postHandler = (posts, state, elements, i18n) => {
     a.setAttribute('target', '_blank');
     a.classList.add('fw-bold');
     a.dataset.id = post.id;
-
-    const { modalElements } = elements;
-    const modal = new Modal(modalElements.container);
     const btn = document.createElement('button');
     btn.textContent = i18n.t('content.show');
     btn.dataset.id = post.id;
-    btn.classList.add('btn', 'btn-sm', 'btn-outline-light');
-    btn.addEventListener('click', () => {
-      clickHandler();
-      modalElements.title.textContent = post.title;
-      modalElements.body.textContent = post.description;
-      modalElements.btnFullArticle.setAttribute('href', post.link);
-      modalElements.btnsClose.forEach((button) => {
-        button.addEventListener('click', () => {
-          modal.hide();
-        });
-      });
-      modal.show();
-    });
-
+    btn.classList.add('button-show-more', 'btn', 'btn-sm', 'btn-outline-light');
     postEl.append(a, btn);
-    a.addEventListener('click', clickHandler);
     document.querySelector('.list-posts').prepend(postEl);
   });
+};
+
+const modalContentHandler = (modalContent, elements) => {
+  const { modalElements } = elements;
+  modalElements.title.textContent = modalContent.title;
+  modalElements.body.textContent = modalContent.description;
+  modalElements.btnFullArticle.setAttribute('href', modalContent.link);
+};
+
+const modalShowHandler = (isShown, elements) => {
+  const modal = new Modal(elements.modalElements.container);
+  if (isShown) {
+    modal.show();
+  } else {
+    modal.hide();
+  }
 };
 
 const handleProcessStatus = (elements, process) => {
@@ -141,16 +152,25 @@ const initView = (state, elements, i18n) => (path, value, _, applyData) => {
       invalidRSSHandler(elements, i18n);
       break;
     case 'content.feeds':
-      feedHandler(state, elements, i18n);
+      feedHandler(...applyData.args, elements, i18n);
       break;
     case 'content.posts':
-      postHandler(applyData.args, state, elements, i18n);
+      postHandler(applyData.args, elements, i18n);
       break;
     case 'form.status':
       handleProcessStatus(elements, value, i18n);
       break;
     case 'form.rssUrls':
       successHandler(elements, i18n);
+      break;
+    case 'modal':
+      modalContentHandler(value, elements);
+      break;
+    case 'uiState.modalShow':
+      modalShowHandler(value, elements);
+      break;
+    case 'uiState.visitedPosts':
+      visitedPostsHandler(...applyData.args);
       break;
     default:
       break;

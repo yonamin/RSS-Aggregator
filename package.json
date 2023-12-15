@@ -1,7 +1,7 @@
 {
   "name": "@hexlet/code",
   "version": "1.0.0",
-  "description": "[![Actions Status](https://github.com/yonamin/frontend-project-11/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/yonamin/frontend-project-11/actions)",
+  "description": "RSS Agregator",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@babel/cli": "^7.23.0",
     "@babel/core": "^7.23.0",
+    "@babel/eslint-parser": "^7.23.3",
     "@babel/preset-env": "^7.22.20",
     "autoprefixer": "^10.4.16",
     "css-loader": "^6.8.1",
