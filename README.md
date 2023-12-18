@@ -12,13 +12,9 @@ This agregator shows all posts from uploaded sources. You just have to paste RSS
 ***
 For quick start just visit [this page](https://frontend-project-aggregator.vercel.app/)
 
-## Installation
+## Installation and local usage
 ```Bash
 git clone https://github.com/yonamin/frontend-project-11.git
 make install
-```
-
-## Local usage
-```Bash
 make develop
 ```
