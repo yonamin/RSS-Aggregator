@@ -29,6 +29,22 @@ const parse = (data) => {
   return { title, description, posts };
 };
 
+const elements = {
+  input: document.getElementById('url-input'),
+  submitButton: document.getElementById('rss-submit'),
+  form: document.querySelector('form'),
+  feedbackMessage: document.querySelector('.feedback'),
+  feeds: document.querySelector('.feeds'),
+  posts: document.querySelector('.posts'),
+  modalElements: {
+    container: document.querySelector('.modal'),
+    title: document.querySelector('.modal-title'),
+    body: document.querySelector('.modal-body'),
+    btnsClose: document.querySelectorAll('.close'),
+    btnFullArticle: document.querySelector('.full-article'),
+  },
+};
+
 const app = (i18nextInstance) => {
   const state = {
     form: {
@@ -49,21 +65,6 @@ const app = (i18nextInstance) => {
     uiState: {
       modalShow: false,
       visitedPosts: [],
-    },
-  };
-  const elements = {
-    input: document.getElementById('url-input'),
-    submitButton: document.getElementById('rss-submit'),
-    form: document.querySelector('form'),
-    feedbackMessage: document.querySelector('.feedback'),
-    feeds: document.querySelector('.feeds'),
-    posts: document.querySelector('.posts'),
-    modalElements: {
-      container: document.querySelector('.modal'),
-      title: document.querySelector('.modal-title'),
-      body: document.querySelector('.modal-body'),
-      btnsClose: document.querySelectorAll('.close'),
-      btnFullArticle: document.querySelector('.full-article'),
     },
   };
   const watchedState = onChange(state, view(state, elements, i18nextInstance));
@@ -91,23 +92,21 @@ const app = (i18nextInstance) => {
   };
 
   const checkNewPosts = () => {
-    const promises = watchedState.form.rssUrls.map(({ url, feedId }) => {
-      getPosts(url)
-        .then((newContent) => {
-          newContent.posts.forEach((post) => {
-            const alreadyExists = watchedState.content.posts.find(
-              (oldPost) => oldPost.link === post.link,
-            );
-            if (!alreadyExists) {
-              post.feedId = feedId;
-              watchedState.content.posts.push(post);
-            }
-          });
-        })
-        .catch((e) => {
-          console.log(e);
+    const promises = watchedState.form.rssUrls.map(({ url, feedId }) => getPosts(url)
+      .then((newContent) => {
+        newContent.posts.forEach((post) => {
+          const alreadyExists = watchedState.content.posts.find(
+            (oldPost) => oldPost.link === post.link,
+          );
+          if (!alreadyExists) {
+            post.feedId = feedId;
+            watchedState.content.posts.push(post);
+          }
         });
-    });
+      })
+      .catch((e) => {
+        console.log(e);
+      }));
     return Promise.all(promises);
   };
 
