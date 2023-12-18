@@ -109,7 +109,7 @@ const postHandler = (posts, elements, i18n) => {
     const btn = document.createElement('button');
     btn.textContent = i18n.t('content.show');
     btn.dataset.id = post.id;
-    btn.classList.add('button-show-more', 'btn', 'btn-sm', 'btn-outline-light');
+    btn.classList.add('button-show-more', 'btn', 'btn-sm', 'btn-outline-primary');
     postEl.append(a, btn);
     document.querySelector('.list-posts').prepend(postEl);
   });
@@ -126,9 +126,10 @@ const modalShowHandler = (isShown, elements) => {
   const modal = new Modal(elements.modalElements.container);
   if (isShown) {
     modal.show();
-  } else {
-    modal.hide();
   }
+  // } else {
+  //   modal.hide();
+  // }
 };
 
 const handleProcessStatus = (elements, process) => {

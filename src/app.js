@@ -90,8 +90,8 @@ const app = (i18nextInstance) => {
       });
   };
 
-  const checkNewPosts = () => new Promise((resolve) => {
-    watchedState.form.rssUrls.forEach(({ url, feedId }) => {
+  const checkNewPosts = () => {
+    const promises = watchedState.form.rssUrls.map(({ url, feedId }) => {
       getPosts(url)
         .then((newContent) => {
           newContent.posts.forEach((post) => {
@@ -108,8 +108,8 @@ const app = (i18nextInstance) => {
           console.log(e);
         });
     });
-    resolve();
-  });
+    return Promise.all(promises);
+  };
 
   yup.setLocale({
     string: {
