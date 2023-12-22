@@ -1,27 +1,8 @@
 import { Modal } from 'bootstrap';
 
-const errorHandler = (alert, elements) => {
-  const errorMessage = alert.error?.url.message;
-  if (errorMessage) {
-    elements.input.classList.add('is-invalid');
-    elements.feedbackMessage.textContent = errorMessage;
-    elements.feedbackMessage.classList.remove('text-success');
-    elements.feedbackMessage.classList.add('text-danger');
-  }
-};
-
-const networkErrorHandler = (value, elements, i18n) => {
-  if (value) {
-    elements.feedbackMessage.textContent = i18n.t(
-      'feedbackMessage.networkError',
-    );
-    elements.feedbackMessage.classList.remove('text-success');
-    elements.feedbackMessage.classList.add('text-danger');
-  }
-};
-
-const invalidRSSHandler = (elements, i18n) => {
-  elements.feedbackMessage.textContent = i18n.t('feedbackMessage.invalidRSS');
+const errorHandler = (errorName, elements, i18n) => {
+  elements.input.classList.add('is-invalid');
+  elements.feedbackMessage.textContent = i18n.t(`feedbackMessage.${errorName}`);
   elements.feedbackMessage.classList.remove('text-success');
   elements.feedbackMessage.classList.add('text-danger');
 };
@@ -127,31 +108,30 @@ const modalShowHandler = (isShown, elements) => {
   if (isShown) {
     modal.show();
   }
-  // } else {
-  //   modal.hide();
-  // }
 };
 
-const handleProcessStatus = (elements, process) => {
+const processStatusHandler = (elements, process, state, i18n) => {
   elements.input.disabled = false;
   elements.submitButton.disabled = false;
-  if (process === 'sending') {
-    elements.input.disabled = true;
-    elements.submitButton.disabled = true;
+
+  switch (process) {
+    case 'error':
+      errorHandler(state.form.errors, elements, i18n);
+      break;
+    case 'sending':
+      elements.input.disabled = true;
+      elements.submitButton.disabled = true;
+      break;
+    case 'success':
+      successHandler(elements, i18n);
+      break;
+    default:
+      throw new Error(`Unknown process state: ${process}`);
   }
 };
 
 const initView = (state, elements, i18n) => (path, value, _, applyData) => {
   switch (path) {
-    case 'form.validationErrors':
-      errorHandler(value, elements);
-      break;
-    case 'form.processErrors.networkError':
-      networkErrorHandler(value, elements, i18n);
-      break;
-    case 'form.processErrors.invalidRSS':
-      invalidRSSHandler(elements, i18n);
-      break;
     case 'content.feeds':
       feedHandler(...applyData.args, elements, i18n);
       break;
@@ -159,10 +139,7 @@ const initView = (state, elements, i18n) => (path, value, _, applyData) => {
       postHandler(applyData.args, elements, i18n);
       break;
     case 'form.status':
-      handleProcessStatus(elements, value, i18n);
-      break;
-    case 'form.rssUrls':
-      successHandler(elements, i18n);
+      processStatusHandler(elements, value, state, i18n);
       break;
     case 'modal':
       modalContentHandler(value, elements);

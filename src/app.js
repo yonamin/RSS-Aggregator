@@ -29,33 +29,12 @@ const parse = (data) => {
   return { title, description, posts };
 };
 
-const elements = {
-  input: document.getElementById('url-input'),
-  submitButton: document.getElementById('rss-submit'),
-  form: document.querySelector('form'),
-  feedbackMessage: document.querySelector('.feedback'),
-  feeds: document.querySelector('.feeds'),
-  posts: document.querySelector('.posts'),
-  modalElements: {
-    container: document.querySelector('.modal'),
-    title: document.querySelector('.modal-title'),
-    body: document.querySelector('.modal-body'),
-    btnsClose: document.querySelectorAll('.close'),
-    btnFullArticle: document.querySelector('.full-article'),
-  },
-};
-
 const app = (i18nextInstance) => {
   const state = {
     form: {
       status: 'filling',
       rssUrls: [],
-      validationErrors: {},
-      processErrors: {
-        networkError: null,
-        parsingError: null,
-        invalidRSS: {},
-      },
+      errors: '',
     },
     modal: {},
     content: {
@@ -67,14 +46,33 @@ const app = (i18nextInstance) => {
       visitedPosts: [],
     },
   };
+
+  const elements = {
+    input: document.getElementById('url-input'),
+    submitButton: document.getElementById('rss-submit'),
+    form: document.querySelector('form'),
+    feedbackMessage: document.querySelector('.feedback'),
+    feeds: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
+    modalElements: {
+      container: document.querySelector('.modal'),
+      title: document.querySelector('.modal-title'),
+      body: document.querySelector('.modal-body'),
+      btnsClose: document.querySelectorAll('.close'),
+      btnFullArticle: document.querySelector('.full-article'),
+    },
+  };
+
   const watchedState = onChange(state, view(state, elements, i18nextInstance));
 
-  const originUrlProxy = (url) => {
+  const buildOriginUrl = (url) => {
     const encoded = encodeURIComponent(url);
-    return `https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`;
+    const originUrl = new URL(`https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`);
+    return originUrl.href;
   };
+
   const getPosts = (inputedUrl) => {
-    const originURL = originUrlProxy(inputedUrl);
+    const originURL = buildOriginUrl(inputedUrl);
     return axios
       .get(originURL)
       .then((response) => {
@@ -94,15 +92,18 @@ const app = (i18nextInstance) => {
   const checkNewPosts = () => {
     const promises = watchedState.form.rssUrls.map(({ url, feedId }) => getPosts(url)
       .then((newContent) => {
-        newContent.posts.forEach((post) => {
-          const alreadyExists = watchedState.content.posts.find(
-            (oldPost) => oldPost.link === post.link,
-          );
-          if (!alreadyExists) {
+        const newPosts = newContent.posts
+          .filter((post) => {
+            const alreadyExists = watchedState.content.posts.find(
+              (oldPost) => oldPost.link === post.link,
+            );
+            return (!alreadyExists);
+          })
+          .map((post) => {
             post.feedId = feedId;
-            watchedState.content.posts.push(post);
-          }
-        });
+            return post;
+          });
+        watchedState.content.posts.push(...newPosts);
       })
       .catch((e) => {
         console.log(e);
@@ -112,13 +113,13 @@ const app = (i18nextInstance) => {
 
   yup.setLocale({
     string: {
-      isUnique: i18nextInstance.t('feedbackMessage.alreadyExists'),
-      url: i18nextInstance.t('feedbackMessage.invalidUrl'),
+      isUnique: 'alreadyExists',
+      url: 'invalidUrl',
     },
   });
 
-  const isUnique = (url) => {
-    const urls = watchedState.form.rssUrls.map((item) => item.url);
+  const isUnique = (url, urlList) => {
+    const urls = urlList.map((item) => item.url);
     return !urls.includes(url);
   };
   const schema = yup.object({
@@ -127,8 +128,8 @@ const app = (i18nextInstance) => {
       .url()
       .test(
         'isUnique',
-        i18nextInstance.t('feedbackMessage.alreadyExists'),
-        (value) => isUnique(value),
+        'alreadyExists',
+        (value) => isUnique(value, watchedState.form.rssUrls),
       )
       .required(),
   });
@@ -136,7 +137,9 @@ const app = (i18nextInstance) => {
   const validate = (field) => schema
     .validate(field, { abortEarly: false })
     .then(() => {})
-    .catch((e) => _.keyBy(e.inner, 'path'));
+    .catch((e) => {
+      throw _.keyBy(e.inner, 'path');
+    });
 
   setTimeout(function run() {
     checkNewPosts()
@@ -148,17 +151,8 @@ const app = (i18nextInstance) => {
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.form.status = 'sending';
-    watchedState.form.processErrors.networkError = null;
-    watchedState.form.processErrors.parsingError = null;
-
     const { value } = elements.input;
     validate({ url: value })
-      .then((error) => {
-        watchedState.form.validationErrors = { error };
-        if (!_.isEmpty(watchedState.form.validationErrors.error)) {
-          throw error;
-        }
-      })
       .then(() => getPosts(value))
       .then((content) => {
         const {
@@ -170,12 +164,18 @@ const app = (i18nextInstance) => {
         watchedState.form.status = 'success';
       })
       .catch((err) => {
-        watchedState.form.status = 'error';
-        if (err.message === 'Network Error') {
-          watchedState.form.processErrors.networkError = { err };
-        } else if (err.message === 'Parsing Error') {
-          watchedState.form.processErrors.invalidRSS = { err };
+        switch (err.message) {
+          case 'Network Error':
+            watchedState.form.errors = 'networkError';
+            break;
+          case 'Parsing Error':
+            watchedState.form.errors = 'invalidRSS';
+            break;
+          default:
+            watchedState.form.errors = err.url.message;
+            break;
         }
+        watchedState.form.status = 'error';
       });
   });
 
