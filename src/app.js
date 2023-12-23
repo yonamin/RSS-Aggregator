@@ -66,8 +66,9 @@ const app = (i18nextInstance) => {
   const watchedState = onChange(state, view(state, elements, i18nextInstance));
 
   const buildOriginUrl = (url) => {
-    const encoded = encodeURIComponent(url);
-    const originUrl = new URL(`https://allorigins.hexlet.app/get?disableCache=true&url=${encoded}`);
+    const originUrl = new URL('/get', 'https://allorigins.hexlet.app');
+    originUrl.searchParams.set('disableCache', true);
+    originUrl.searchParams.set('url', url);
     return originUrl.href;
   };
 
@@ -113,33 +114,28 @@ const app = (i18nextInstance) => {
 
   yup.setLocale({
     string: {
-      isUnique: 'alreadyExists',
       url: 'invalidUrl',
     },
+    mixed: {
+      notOneOf: 'alreadyExists',
+    }
   });
 
-  const isUnique = (url, urlList) => {
-    const urls = urlList.map((item) => item.url);
-    return !urls.includes(url);
-  };
-  const schema = yup.object({
+  const validate = (field, urls) => {
+    const schema = yup.object({
     url: yup
       .string()
       .url()
-      .test(
-        'isUnique',
-        'alreadyExists',
-        (value) => isUnique(value, watchedState.form.rssUrls),
-      )
+      .notOneOf(urls)
       .required(),
   });
-
-  const validate = (field) => schema
+    return schema
     .validate(field, { abortEarly: false })
     .then(() => {})
     .catch((e) => {
       throw _.keyBy(e.inner, 'path');
     });
+  }
 
   setTimeout(function run() {
     checkNewPosts()
@@ -151,8 +147,10 @@ const app = (i18nextInstance) => {
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.form.status = 'sending';
+    const urls = watchedState.form.rssUrls.map((item) => item.url);
     const { value } = elements.input;
-    validate({ url: value })
+
+    validate({ url: value }, urls)
       .then(() => getPosts(value))
       .then((content) => {
         const {
