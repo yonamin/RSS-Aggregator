@@ -118,24 +118,24 @@ const app = (i18nextInstance) => {
     },
     mixed: {
       notOneOf: 'alreadyExists',
-    }
+    },
   });
 
   const validate = (field, urls) => {
     const schema = yup.object({
-    url: yup
-      .string()
-      .url()
-      .notOneOf(urls)
-      .required(),
-  });
-    return schema
-    .validate(field, { abortEarly: false })
-    .then(() => {})
-    .catch((e) => {
-      throw _.keyBy(e.inner, 'path');
+      url: yup
+        .string()
+        .url()
+        .notOneOf(urls)
+        .required(),
     });
-  }
+    return schema
+      .validate(field, { abortEarly: false })
+      .then(() => {})
+      .catch((e) => {
+        throw _.keyBy(e.inner, 'path');
+      });
+  };
 
   setTimeout(function run() {
     checkNewPosts()
