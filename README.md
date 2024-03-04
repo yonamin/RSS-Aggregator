@@ -14,7 +14,7 @@ For quick start just visit [this page](https://frontend-project-aggregator.verce
 
 ## Installation and local usage
 ```Bash
-git clone https://github.com/yonamin/frontend-project-11.git
+git clone https://github.com/yonamin/RSS-Aggregator.git
 make install
 make develop
 ```
